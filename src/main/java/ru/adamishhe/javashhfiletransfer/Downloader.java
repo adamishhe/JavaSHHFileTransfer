@@ -10,12 +10,17 @@ import java.util.Set;
 import java.util.Vector;
 
 public class Downloader {
-    public static void download(String username, String host, int port, String password, String localDirectory, Set<String> downloadedFiles, Session session) {
+    public static void download(String localDirectory, Set<String> downloadedFiles, Session session) {
+        ReportController reportController = new ReportController();
         try {
             String remoteDirectory = "/rpi_dts/temp_data/pool0";
 
+            System.out.println("trying to open sftp channel");
+
             ChannelSftp channelSftp = (ChannelSftp) session.openChannel("sftp");
             channelSftp.connect();
+
+            System.out.println("sftp connected");
 
             // Получаем список файлов и директорий в указанной директории на удаленном сервере
             Vector<ChannelSftp.LsEntry> fileList = channelSftp.ls(remoteDirectory);
@@ -36,7 +41,10 @@ public class Downloader {
 
                 // Обрабатываем файл
                 System.out.println("File downloaded: " + file.getFilename());
-                ReportController.addLog("File downloaded: " + file.getFilename() + "\n");
+                reportController.addLog("File downloaded: " + file.getFilename() + "\n");
+
+                System.out.println("trying to work with file");
+
                 FileWorker.work(file.getFilename());
             }
             channelSftp.disconnect();

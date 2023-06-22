@@ -20,6 +20,7 @@ public class FileWorker {
         long timestamp = 0;
         boolean foundDataSection = false;
         List<String> dataLines = new ArrayList<>();
+        ReportController reportController = new ReportController();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(lasFilePath))) {
             String line;
@@ -52,7 +53,7 @@ public class FileWorker {
         }
 
         // Делаем что-то с извлеченной датой
-        ReportController.addLog("Date: " + timestamp + "\n");
+        reportController.addLog("Date: " + timestamp + "\n");
 
         for (String dataLine : dataLines) {
             String[] fields = dataLine.split("\\s+"); // Делим строку по пробелам
@@ -60,8 +61,8 @@ public class FileWorker {
             double temperature = Double.parseDouble(fields[1]);
 
             // Делаем что-то с извлеченными значениями
-            ReportController.addLog("Depth: " + depth + ", Temperature: " + temperature + "\n");
+            reportController.addLog("Depth: " + depth + ", Temperature: " + temperature + "\n");
         }
-        ReportController.addLog("-----------------------------------------\n");
+        reportController.addLog("-----------------------------------------\n");
     }
 }

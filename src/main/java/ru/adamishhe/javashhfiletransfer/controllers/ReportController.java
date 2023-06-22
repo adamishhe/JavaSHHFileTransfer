@@ -15,9 +15,9 @@ public class ReportController {
     private Button stopButton;
 
     @FXML
-    private static TextArea logArea;
+    private TextArea logArea;
 
-    public static void addLog(String text) {
+    public void addLog(String text) {
         logArea.appendText(text);
     }
 
@@ -27,7 +27,9 @@ public class ReportController {
 
     @FXML
     private void stopButtonAction() {
-        timeline.stop();
+        if (timeline != null) {
+            timeline.stop();
+        }
         SSHSessionManager sessionManager = SSHSessionManager.getInstance();
         Session session = sessionManager.getSession(); // Получаем сеанс SSH
         session.disconnect();

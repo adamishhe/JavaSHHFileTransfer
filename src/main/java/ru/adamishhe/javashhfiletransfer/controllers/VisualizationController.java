@@ -78,7 +78,7 @@ public class VisualizationController {
 
     @FXML
     public void initialize() {
-        File directory = new File("src/main/resources/saved");
+        File directory = new File("saved");
         File[] files = directory.listFiles();
 
         if (files != null) {
@@ -124,6 +124,16 @@ public class VisualizationController {
             e.printStackTrace();
         }
 
+
+        String hostname = hostnameTextField.getText();
+        int port = Integer.parseInt(portTextField.getText());
+        int refreshTime = Integer.parseInt(refreshTextField.getText());
+        String username = usernameTextField.getText();
+        String password = passwordField.getText();
+        String folder = folderTextField.getText();
+        String serverAddress = serverAddressTextField.getText();
+        String wellName = wellNameTextField.getText();
+
         // Получение Stage из текущего события
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setTitle("Data transfer");
@@ -134,8 +144,6 @@ public class VisualizationController {
 
         ReportController reportController = loader.getController();
 
-
-
         // Создание новой сцены с загруженным макетом из FXML-файла
         Scene newScene = new Scene(root);
 
@@ -143,28 +151,30 @@ public class VisualizationController {
         stage.setScene(newScene);
         stage.show();
 
-        // 2. поставить java на удаленный комп
-        // 3. проверить весь код на корректность
-        // 4. после этого протестировать на удаленном компе. (просто проверить закачку файлов) (проверить парсинг данных через вывод в консоль)
-        // 5. добавить вывод логов. (и спросить про эти логи)
+
         // 6. спросить про http запрос.
         // 7. реализовать отправку запаршенных данных на сервер
+        //---------------------------
+        // не работает кнопка save
+        // не работает log area
         try {
             JSch jsch = new JSch();
-            Session session = jsch.getSession(usernameTextField.getText(), hostnameTextField.getText(),
-                    Integer.parseInt(portTextField.getText()));
-            session.setPassword(passwordField.getText());
+            Session session = jsch.getSession(username, hostname, port);
+            session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
+            System.out.println("Connected");
 
             SSHSessionManager sessionManager = SSHSessionManager.getInstance();
             sessionManager.setSession(session);
 
-            Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(Integer.parseInt(refreshTextField.getText())), new EventHandler<ActionEvent>() {
+            Downloader.download(folder, downloadedFiles, session);
+
+            Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(refreshTime), new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent event) {
-                    Downloader.download(usernameTextField.getText(), hostnameTextField.getText(),
-                    Integer.parseInt(portTextField.getText()), passwordField.getText(), folderTextField.getText(), downloadedFiles, session);
+                    System.out.println("call download method");
+                    Downloader.download(folder, downloadedFiles, session);
                 }
             }));
             // Установка повторения бесконечного количества раз
@@ -181,12 +191,14 @@ public class VisualizationController {
 
     @FXML
     private void saveButtonAction() {
-        String data = hostnameTextField.getText() + " " + portTextField.getText()
-                + " " + refreshTextField.getText() + " " + usernameTextField.getText() + " "
-                + passwordField.getText() + " " + folderTextField.getText() + " "
-                + serverAddressTextField.getText() + " " + wellNameTextField.getText();
+        String data = hostnameTextField.getText() + "\n" + portTextField.getText()
+                + "\n" + refreshTextField.getText() + "\n" + usernameTextField.getText() + "\n"
+                + passwordField.getText() + "\n" + folderTextField.getText() + "\n"
+                + serverAddressTextField.getText() + "\n" + wellNameTextField.getText();
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/saved/"+savedTextField.getText()+".txt", false))) {
+        String filePath = "saved/" + savedTextField.getText() + ".txt";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false))) {
             writer.write(data);
         } catch (IOException e) {
             e.printStackTrace();
@@ -201,17 +213,17 @@ public class VisualizationController {
     private void listViewClicked() {
         String selectedValue = listView.getSelectionModel().getSelectedItem();
         if (selectedValue != null) {
-            String filePath = "src/main/resources/saved/" + selectedValue + ".txt";
+            String filePath = "saved/" + selectedValue + ".txt";
 
             try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
                 String line;
                 StringBuilder content = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
-                    content.append(line);
+                    content.append(line).append("\n");
                 }
 
                 // Заполняем поля TextField данными из файла
-                String[] data = content.toString().split(" ");
+                String[] data = content.toString().split("\n");
                 savedTextField.setText(selectedValue);
                 if (data.length >= 8) {
                     hostnameTextField.setText(data[0]);
@@ -250,13 +262,14 @@ public class VisualizationController {
             listView.getItems().remove(selectedValue);
 
             // Удаляем файл с соответствующим именем
-            String filePath = "src/main/resources/saved/" + selectedValue + ".txt";
+            String filePath = "saved/" + selectedValue + ".txt";
+
             File file = new File(filePath);
             if (file.exists()) {
                 if (file.delete()) {
-                    System.out.println("Файл успешно удален: " + filePath);
+                    System.out.println("file deleted: " + filePath);
                 } else {
-                    System.out.println("Не удалось удалить файл: " + filePath);
+                    System.out.println("file not deleted: " + filePath);
                 }
             }
         }
