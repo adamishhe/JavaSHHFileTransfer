@@ -1,6 +1,7 @@
 package ru.adamishhe.javashhfiletransfer;
 
 import com.jcraft.jsch.*;
+import javafx.application.Platform;
 import ru.adamishhe.javashhfiletransfer.controllers.ReportController;
 
 import java.io.File;
@@ -10,8 +11,8 @@ import java.util.Set;
 import java.util.Vector;
 
 public class Downloader {
-    public static void download(String localDirectory, Set<String> downloadedFiles, Session session) {
-        ReportController reportController = new ReportController();
+    public static void download(String localDirectory, Set<String> downloadedFiles, Session session,
+                                                                    ReportController reportController) {
         try {
             String remoteDirectory = "/rpi_dts/temp_data/pool0";
 
@@ -41,11 +42,13 @@ public class Downloader {
 
                 // Обрабатываем файл
                 System.out.println("File downloaded: " + file.getFilename());
-                reportController.addLog("File downloaded: " + file.getFilename() + "\n");
+                Platform.runLater(() -> {
+                    reportController.addLog("File downloaded: " + file.getFilename() + "\n");
+                });
 
                 System.out.println("trying to work with file");
 
-                FileWorker.work(file.getFilename());
+                FileWorker.work(localDirectory + "/" + file.getFilename(), reportController);
             }
             channelSftp.disconnect();
         } catch (Exception e) {

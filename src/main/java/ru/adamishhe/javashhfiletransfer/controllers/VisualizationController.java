@@ -1,12 +1,8 @@
 package ru.adamishhe.javashhfiletransfer.controllers;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -18,15 +14,9 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
-import javafx.util.Duration;
-import ru.adamishhe.javashhfiletransfer.Downloader;
-import ru.adamishhe.javashhfiletransfer.SSHSessionManager;
+import javafx.stage.WindowEvent;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
 
 public class VisualizationController {
 
@@ -113,27 +103,6 @@ public class VisualizationController {
     @FXML
     private void submitButtonAction(ActionEvent event) throws IOException {
 
-        Set<String> downloadedFiles = new HashSet<>();
-
-        try {
-            // Получаем список файлов в директории
-            Files.list(Paths.get(folderTextField.getText()))
-                    .filter(Files::isRegularFile)
-                    .forEach(path -> downloadedFiles.add(path.getFileName().toString()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        String hostname = hostnameTextField.getText();
-        int port = Integer.parseInt(portTextField.getText());
-        int refreshTime = Integer.parseInt(refreshTextField.getText());
-        String username = usernameTextField.getText();
-        String password = passwordField.getText();
-        String folder = folderTextField.getText();
-        String serverAddress = serverAddressTextField.getText();
-        String wellName = wellNameTextField.getText();
-
         // Получение Stage из текущего события
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setTitle("Data transfer");
@@ -144,6 +113,15 @@ public class VisualizationController {
 
         ReportController reportController = loader.getController();
 
+        reportController.setHostname(hostnameTextField.getText());
+        reportController.setPort(Integer.parseInt(portTextField.getText()));
+        reportController.setRefreshTime(Integer.parseInt(refreshTextField.getText()));
+        reportController.setUsername(usernameTextField.getText());
+        reportController.setPassword(passwordField.getText());
+        reportController.setFolder(folderTextField.getText());
+        reportController.setServerAddress(serverAddressTextField.getText());
+        reportController.setWellName(wellNameTextField.getText());
+
         // Создание новой сцены с загруженным макетом из FXML-файла
         Scene newScene = new Scene(root);
 
@@ -151,42 +129,23 @@ public class VisualizationController {
         stage.setScene(newScene);
         stage.show();
 
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                reportController.startDownload();
+                return null;
+            }
+        };
+
+        // Создание и запуск потока для выполнения задачи
+        Thread thread = new Thread(task);
+        thread.start();
+
 
         // 6. спросить про http запрос.
         // 7. реализовать отправку запаршенных данных на сервер
         //---------------------------
-        // не работает кнопка save
-        // не работает log area
-        try {
-            JSch jsch = new JSch();
-            Session session = jsch.getSession(username, hostname, port);
-            session.setPassword(password);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
-            System.out.println("Connected");
 
-            SSHSessionManager sessionManager = SSHSessionManager.getInstance();
-            sessionManager.setSession(session);
-
-            Downloader.download(folder, downloadedFiles, session);
-
-            Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(refreshTime), new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    System.out.println("call download method");
-                    Downloader.download(folder, downloadedFiles, session);
-                }
-            }));
-            // Установка повторения бесконечного количества раз
-            timeline.setCycleCount(Timeline.INDEFINITE);
-
-            // Запуск Timeline
-            timeline.play();
-
-            reportController.setTimeline(timeline);
-        } catch (JSchException e) {
-            e.printStackTrace();
-        }
     }
 
     @FXML
@@ -195,6 +154,18 @@ public class VisualizationController {
                 + "\n" + refreshTextField.getText() + "\n" + usernameTextField.getText() + "\n"
                 + passwordField.getText() + "\n" + folderTextField.getText() + "\n"
                 + serverAddressTextField.getText() + "\n" + wellNameTextField.getText();
+
+        String directoryPath = "saved";
+
+        File directory = new File(directoryPath);
+        if (!directory.exists()) {
+            boolean created = directory.mkdir();
+            if (created) {
+                System.out.println("Directory created");
+            } else {
+                System.out.println("Directory not created");
+            }
+        }
 
         String filePath = "saved/" + savedTextField.getText() + ".txt";
 

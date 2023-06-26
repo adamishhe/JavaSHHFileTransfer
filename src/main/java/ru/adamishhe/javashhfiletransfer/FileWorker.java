@@ -1,5 +1,6 @@
 package ru.adamishhe.javashhfiletransfer;
 
+import javafx.application.Platform;
 import ru.adamishhe.javashhfiletransfer.controllers.ReportController;
 
 import java.io.BufferedReader;
@@ -14,13 +15,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileWorker {
-    public static void work(String lasFilePath) {
+    public static void work(String lasFilePath, ReportController reportController) {
 
         String dateString = null;
         long timestamp = 0;
         boolean foundDataSection = false;
         List<String> dataLines = new ArrayList<>();
-        ReportController reportController = new ReportController();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(lasFilePath))) {
             String line;
@@ -52,17 +52,28 @@ public class FileWorker {
             e.printStackTrace();
         }
 
-        // Делаем что-то с извлеченной датой
-        reportController.addLog("Date: " + timestamp + "\n");
+
+        long finalTimestamp = timestamp;
+        Platform.runLater(() -> {
+            // Делаем что-то с извлеченной датой
+            reportController.addLog("Date: " + finalTimestamp + "\n");
+        });
+
 
         for (String dataLine : dataLines) {
             String[] fields = dataLine.split("\\s+"); // Делим строку по пробелам
             double depth = Double.parseDouble(fields[0]);
             double temperature = Double.parseDouble(fields[1]);
 
-            // Делаем что-то с извлеченными значениями
-            reportController.addLog("Depth: " + depth + ", Temperature: " + temperature + "\n");
+
+            Platform.runLater(() -> {
+                // Делаем что-то с извлеченными значениями
+                reportController.addLog("Depth: " + depth + ", Temperature: " + temperature + "\n");
+            });
         }
-        reportController.addLog("-----------------------------------------\n");
+
+        Platform.runLater(() -> {
+            reportController.addLog("-----------------------------------------\n");
+        });
     }
 }
