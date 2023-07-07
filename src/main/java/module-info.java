@@ -3,6 +3,7 @@ module ru.adamishhe.javashhfiletransfer {
     requires javafx.fxml;
     requires com.jcraft.jsch;
     requires java.base;
+    requires org.json;
 
 
     opens ru.adamishhe.javashhfiletransfer to javafx.fxml;

@@ -1,6 +1,5 @@
 package ru.adamishhe.javashhfiletransfer.controllers;
 
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,17 +11,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 import java.io.*;
 
 public class VisualizationController {
-
-
-    @FXML
-    private Button browseButton;
 
     @FXML
     private Button submitButton;
@@ -40,7 +33,7 @@ public class VisualizationController {
     private ListView<String> listView;
 
     @FXML
-    private TextField folderTextField;
+    private TextField getTextField;
 
     @FXML
     private TextField hostnameTextField;
@@ -83,24 +76,6 @@ public class VisualizationController {
     }
 
     @FXML
-    private void browseButtonAction() {
-
-        // Создание диалогового окна выбора директории
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Choose directory");
-
-        // Отображение диалогового окна и получение выбранной директории
-        Stage stage = (Stage) browseButton.getScene().getWindow();
-        File selectedDirectory = directoryChooser.showDialog(stage);
-
-        // Проверка выбранной директории и выполнение необходимых действий
-        if (selectedDirectory != null) {
-            folderTextField.setText(selectedDirectory.getAbsolutePath());
-        }
-
-    }
-
-    @FXML
     private void submitButtonAction(ActionEvent event) throws IOException {
 
         // Получение Stage из текущего события
@@ -118,7 +93,7 @@ public class VisualizationController {
         reportController.setRefreshTime(Integer.parseInt(refreshTextField.getText()));
         reportController.setUsername(usernameTextField.getText());
         reportController.setPassword(passwordField.getText());
-        reportController.setFolder(folderTextField.getText());
+        reportController.setFolder(getTextField.getText());
         reportController.setServerAddress(serverAddressTextField.getText());
         reportController.setWellName(wellNameTextField.getText());
 
@@ -132,7 +107,7 @@ public class VisualizationController {
         Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                reportController.startDownload();
+                reportController.startTransfer();
                 return null;
             }
         };
@@ -140,19 +115,13 @@ public class VisualizationController {
         // Создание и запуск потока для выполнения задачи
         Thread thread = new Thread(task);
         thread.start();
-
-
-        // 6. спросить про http запрос.
-        // 7. реализовать отправку запаршенных данных на сервер
-        //---------------------------
-
     }
 
     @FXML
     private void saveButtonAction() {
         String data = hostnameTextField.getText() + "\n" + portTextField.getText()
                 + "\n" + refreshTextField.getText() + "\n" + usernameTextField.getText() + "\n"
-                + passwordField.getText() + "\n" + folderTextField.getText() + "\n"
+                + passwordField.getText() + "\n" + getTextField.getText() + "\n"
                 + serverAddressTextField.getText() + "\n" + wellNameTextField.getText();
 
         String directoryPath = "saved";
@@ -202,7 +171,7 @@ public class VisualizationController {
                     refreshTextField.setText(data[2]);
                     usernameTextField.setText(data[3]);
                     passwordField.setText(data[4]);
-                    folderTextField.setText(data[5]);
+                    getTextField.setText(data[5]);
                     serverAddressTextField.setText(data[6]);
                     wellNameTextField.setText(data[7]);
                 }

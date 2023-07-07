@@ -1,38 +1,45 @@
 package ru.adamishhe.javashhfiletransfer;
 
-import javafx.application.Platform;
+import org.json.JSONObject;
 import ru.adamishhe.javashhfiletransfer.controllers.ReportController;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileWorker {
-    public static void work(String lasFilePath, ReportController reportController) {
+    public static void work(InputStream fileInputStream, SimpleDateFormat dateFormat,
+                                    ReportController reportController, String wellName, String serverAddress) {
+
+        // Установка временной зоны в SimpleDateFormat
+        dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Novosibirsk"));
 
         String dateString = null;
         long timestamp = 0;
         boolean foundDataSection = false;
         List<String> dataLines = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(lasFilePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("DATE")) {
+        try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileInputStream))) {
+
+            // Читаем содержимое файла
+            String fileLine;
+
+            while ((fileLine = fileReader.readLine()) != null) {
+                if (fileLine.startsWith("DATE")) {
                     // Извлекаем дату из строки "DATE"
                     Pattern pattern = Pattern.compile("\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}-\\d{2}-\\d{2}");
-                    Matcher matcher = pattern.matcher(line);
+                    Matcher matcher = pattern.matcher(fileLine);
                     if (matcher.find()) {
                         dateString = matcher.group();
-                        String patternString = "dd.MM.yyyy HH-mm-ss";
-                        SimpleDateFormat dateFormat = new SimpleDateFormat(patternString);
                         try {
                             Date date = dateFormat.parse(dateString);
                             timestamp = date.getTime();
@@ -43,8 +50,8 @@ public class FileWorker {
                 }
                 if (foundDataSection) {
                     // Добавляем строки, находящиеся ниже ~A, в список dataLines
-                    dataLines.add(line);
-                } else if (line.startsWith("~A")) {
+                    dataLines.add(fileLine);
+                } else if (fileLine.startsWith("~A")) {
                     foundDataSection = true;
                 }
             }
@@ -52,28 +59,8 @@ public class FileWorker {
             e.printStackTrace();
         }
 
-
-        long finalTimestamp = timestamp;
-        Platform.runLater(() -> {
-            // Делаем что-то с извлеченной датой
-            reportController.addLog("Date: " + finalTimestamp + "\n");
-        });
-
-
-        for (String dataLine : dataLines) {
-            String[] fields = dataLine.split("\\s+"); // Делим строку по пробелам
-            double depth = Double.parseDouble(fields[0]);
-            double temperature = Double.parseDouble(fields[1]);
-
-
-            Platform.runLater(() -> {
-                // Делаем что-то с извлеченными значениями
-                reportController.addLog("Depth: " + depth + ", Temperature: " + temperature + "\n");
-            });
-        }
-
-        Platform.runLater(() -> {
-            reportController.addLog("-----------------------------------------\n");
-        });
+        JSONObject json = DataTransfer.createJson(timestamp, dataLines, wellName);
+        //System.out.println(json.toString());
+        DataTransfer.sendJsonPostRequest(json, serverAddress, reportController);
     }
 }

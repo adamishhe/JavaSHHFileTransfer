@@ -3,7 +3,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-
 <AnchorPane prefHeight="526.0" prefWidth="300.0" style="-fx-background-color: FFFFFF;" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.adamishhe.javashhfiletransfer.controllers.VisualizationController">
    <children>
       <Label layoutX="19.0" layoutY="14.0" prefHeight="3.0" prefWidth="55.0" text="Hostname" />
@@ -16,9 +15,8 @@
       <Label layoutX="20.0" layoutY="116.0" text="Username" />
       <Label layoutX="19.0" layoutY="167.0" prefHeight="18.0" prefWidth="54.0" text="Password" />
       <PasswordField fx:id="passwordField" layoutX="19.0" layoutY="185.0" prefHeight="26.0" prefWidth="255.0" />
-      <Label layoutX="19.0" layoutY="216.0" prefHeight="18.0" prefWidth="55.0" text="Folder" />
-      <TextField fx:id="folderTextField" layoutX="20.0" layoutY="234.0" prefHeight="26.0" prefWidth="162.0" />
-      <Button fx:id="browseButton" layoutX="220.0" layoutY="234.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="26.0" prefWidth="54.0" text="Browse" />
+      <Label layoutX="19.0" layoutY="216.0" prefHeight="18.0" prefWidth="63.0" text="Get request" />
+      <TextField fx:id="getTextField" layoutX="20.0" layoutY="234.0" prefHeight="26.0" prefWidth="255.0" />
       <Label layoutX="19.0" layoutY="269.0" prefHeight="18.0" prefWidth="82.0" text="Server address" />
       <TextField fx:id="serverAddressTextField" layoutX="19.0" layoutY="287.0" prefHeight="26.0" prefWidth="255.0" />
       <Label layoutX="20.0" layoutY="321.0" prefHeight="18.0" prefWidth="63.0" text="Well name" />
